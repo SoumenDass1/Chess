@@ -15,12 +15,12 @@ body {
 
 .light-theme {
       background: #f5f5f5;
-      color: #333;
+      color: #6a6a6a;
 }
 
 .dark-theme {
       background: #222;
-      color: #333;
+      color: #6a6a6a;
 }
 
 .theme-toggle {
@@ -88,19 +88,19 @@ body {
   }
 
 .light-theme .square.light {
-      background-color: #f0d9b5;
+      background-color: #ffffff;
 }
 
 .light-theme .square.dark {
-      background-color: #b58863;
+      background-color: #000000;
 }
 
 .dark-theme .square.light {
-      background-color: #d1b48c;
+      background-color: #b9b9b9;
 }
 
 .dark-theme .square.dark {
-      background-color: #8b4513;
+      background-color: #636363;
 }
 
 .square.selected {
