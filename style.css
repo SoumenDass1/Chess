@@ -4,62 +4,107 @@
       box-sizing: border-box;
 }
 
-body,
-html {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      background: #ececec;
+body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      transition: background 0.3s ease, color 0.3s ease;
 }
 
-.container {
+.light-theme {
+      background: #f5f5f5;
+      color: #333;
+}
+
+.dark-theme {
+      background: #222;
+      color: #333;
+}
+
+.theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 50px;
+      cursor: pointer;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.1);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       display: flex;
-      align-items: center;
       justify-content: center;
-      gap: 20px;
+      align-items: center;
+      transition: all 0.3s ease;
+}
+
+.dark-theme .theme-toggle {
+      background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-toggle:hover {
+      transform: scale(1.1);
+}
+
+.game-container {
+      position: relative;
+      width: 100%;
+      max-width: 1000px;
+      padding: 20px;
 }
 
 .chess-board {
       display: grid;
-      grid-template-columns: repeat(8, minmax(30px, 6vw));
-      grid-template-rows: repeat(8, minmax(30px, 6vw));
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      border: 4px solid #333;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      aspect-ratio: 1/1;
+      width: 100%;
+      max-width: 100%;
+      min-width: 600px;
+      min-height: 600px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transition: opacity 0.5s ease;
+}
+
+
+.light-theme .chess-board {
+      border: 2px solid #444;
+}
+
+.dark-theme .chess-board {
+      border: 2px solid #888;
 }
 
 .square {
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 5vw;
-      font-weight: bold;
-      transition: background 0.3s ease;
+      font-size: clamp(32px, 6vw, 80px); 
       cursor: pointer;
       position: relative;
-}
+      transition: background 0.3s ease;
+  }
 
-.light {
+.light-theme .square.light {
       background-color: #f0d9b5;
 }
 
-.dark {
+.light-theme .square.dark {
       background-color: #b58863;
 }
 
-.square:hover {
-      background-color: rgba(255, 255, 0, 0.4);
+.dark-theme .square.light {
+      background-color: #d1b48c;
 }
 
-.selected {
+.dark-theme .square.dark {
+      background-color: #8b4513;
+}
+
+.square.selected {
       background-color: rgba(255, 215, 0, 0.5) !important;
-}
-
-.possible-move {
-      position: relative;
 }
 
 .possible-move::after {
@@ -67,35 +112,94 @@ html {
       position: absolute;
       width: 30%;
       height: 30%;
-      background-color: rgba(0, 255, 0, 0.5);
       border-radius: 50%;
 }
 
+.light-theme .possible-move::after {
+      background-color: rgba(0, 100, 0, 0.5);
+}
+
+.dark-theme .possible-move::after {
+      background-color: rgba(100, 255, 100, 0.5);
+}
+
 .possible-capture {
-      background-color: rgba(255, 0, 0, 0.3) !important;
+      position: relative;
+}
+
+.possible-capture::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+}
+
+.light-theme .possible-capture::before {
+      background-color: rgba(255, 0, 0, 0.3);
+}
+
+.dark-theme .possible-capture::before {
+      background-color: rgba(255, 100, 100, 0.3);
 }
 
 .check {
       background-color: rgba(255, 0, 0, 0.5) !important;
 }
 
-.checkmate {
-      background-color: rgba(255, 0, 0, 0.7) !important;
+.game-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10;
+      visibility: hidden;
+      transition: all 0.5s ease;
 }
 
-/* Responsive for mobile */
-@media (max-width: 768px) {
-      .container {
-            flex-direction: column;
-            gap: 15px;
-      }
+.game-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+}
 
-      .chess-board {
-            grid-template-columns: repeat(8, minmax(25px, 10vw));
-            grid-template-rows: repeat(8, minmax(25px, 10vw));
+.game-over-message {
+      color: white;
+      font-size: clamp(24px, 5vw, 48px);
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.restart-btn {
+      padding: 12px 24px;
+      font-size: 18px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+}
+
+.restart-btn:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 600px) {
+      .game-container {
+            padding: 10px;
       }
 
       .square {
-            font-size: 4.5vw;
+            font-size: clamp(16px, 6vw, 40px);
       }
 }

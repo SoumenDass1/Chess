@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+      // DOM Elements
+      const body = document.body;
+      const themeToggle = document.querySelector('.theme-toggle');
       const board = document.querySelector('.chess-board');
+      const gameOverlay = document.querySelector('.game-overlay');
+      const gameMessage = document.querySelector('.game-over-message');
+      const restartBtn = document.querySelector('.restart-btn');
+
+      // Game state
       let selectedSquare = null;
       let currentPlayer = 'white';
       let enPassantTarget = null;
@@ -7,9 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
             white: { kingside: true, queenside: true },
             black: { kingside: true, queenside: true }
       };
-      let halfmoveClock = 0;
-      let fullmoveNumber = 1;
-      let checkStatus = { white: false, black: false };
       let gameOver = false;
 
       // Piece definitions
@@ -24,6 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Initialize the board state
       let boardState = Array(8).fill().map(() => Array(8).fill(null));
+
+      // Theme toggle
+      themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            body.classList.toggle('dark-theme');
+            updateBoardVisuals();
+      });
+
+      // Restart game
+      restartBtn.addEventListener('click', () => {
+            initializeGame();
+            gameOverlay.classList.remove('visible');
+      });
 
       // Create chess board squares
       function createBoard() {
@@ -42,6 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Set up initial board position
       function initializeBoard() {
+            // Clear board
+            boardState = Array(8).fill().map(() => Array(8).fill(null));
+
             // Set up pawns
             for (let i = 0; i < 8; i++) {
                   boardState[1][i] = { type: 'PAWN', color: 'black', hasMoved: false };
@@ -59,7 +80,23 @@ document.addEventListener('DOMContentLoaded', () => {
                   boardState[7][i] = { type: backRow[i], color: 'white', hasMoved: false };
             }
 
+            // Reset game state
+            currentPlayer = 'white';
+            enPassantTarget = null;
+            castlingAvailability = {
+                  white: { kingside: true, queenside: true },
+                  black: { kingside: true, queenside: true }
+            };
+            gameOver = false;
+            selectedSquare = null;
+
             updateBoardVisuals();
+      }
+
+      // Initialize the game
+      function initializeGame() {
+            createBoard();
+            initializeBoard();
       }
 
       // Update the visual board based on boardState
@@ -70,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   const col = parseInt(square.dataset.col);
                   const piece = boardState[row][col];
 
-                  // Clear previous classes
+                  // Clear previous classes and content
                   square.className = `square ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
                   square.innerHTML = '';
 
@@ -307,8 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Check for check and checkmate
       function checkForCheck() {
-            checkStatus.white = isInCheck('white');
-            checkStatus.black = isInCheck('black');
+            const whiteInCheck = isInCheck('white');
+            const blackInCheck = isInCheck('black');
 
             // Highlight king in check
             const squares = document.querySelectorAll('.square');
@@ -318,8 +355,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   const piece = getPieceAt(row, col);
 
                   if (piece && piece.type === 'KING') {
-                        if ((piece.color === 'white' && checkStatus.white) ||
-                              (piece.color === 'black' && checkStatus.black)) {
+                        if ((piece.color === 'white' && whiteInCheck) ||
+                              (piece.color === 'black' && blackInCheck)) {
                               square.classList.add('check');
                         } else {
                               square.classList.remove('check');
@@ -328,17 +365,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Check for checkmate
-            if (checkStatus.white || checkStatus.black) {
-                  const colorInCheck = checkStatus.white ? 'white' : 'black';
+            if (whiteInCheck || blackInCheck) {
+                  const colorInCheck = whiteInCheck ? 'white' : 'black';
                   if (isCheckmate(colorInCheck)) {
-                        gameOver = true;
-                        alert(`Checkmate! ${colorInCheck === 'white' ? 'Black' : 'White'} wins!`);
-
-                        // Highlight all squares for dramatic effect
-                        squares.forEach(square => {
-                              square.classList.add('checkmate');
-                        });
+                        endGame(colorInCheck === 'white' ? 'Black wins by checkmate!' : 'White wins by checkmate!');
                   }
+            } else if (isStalemate()) {
+                  endGame('Game ended in stalemate!');
             }
       }
 
@@ -377,39 +410,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return true; // No moves get out of check - it's checkmate
       }
 
-      // Handle a square click (move piece or select piece)
-      function handleSquareClick(row, col) {
-            if (gameOver) return;
-
-            const square = document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
-            const piece = getPieceAt(row, col);
-
-            if (!selectedSquare) {
-                  // Select the piece if it's the current player's turn
-                  if (piece && piece.color === currentPlayer) {
-                        selectedSquare = { row, col };
-                        square.classList.add('selected');
-                        highlightMoves(row, col);
+      // Check for stalemate
+      function isStalemate() {
+            // Check if current player has any valid moves
+            for (let fromRow = 0; fromRow < 8; fromRow++) {
+                  for (let fromCol = 0; fromCol < 8; fromCol++) {
+                        const piece = getPieceAt(fromRow, fromCol);
+                        if (piece && piece.color === currentPlayer) {
+                              for (let toRow = 0; toRow < 8; toRow++) {
+                                    for (let toCol = 0; toCol < 8; toCol++) {
+                                          if (isValidMove(fromRow, fromCol, toRow, toCol)) {
+                                                return false; // Found a valid move
+                                          }
+                                    }
+                              }
+                        }
                   }
-            } else {
-                  // Try to move the selected piece
-                  if (selectedSquare.row === row && selectedSquare.col === col) {
-                        // Clicked on the same piece - deselect it
-                        clearHighlights();
-                        selectedSquare = null;
-                        return;
-                  }
-
-                  const validMove = isValidMove(selectedSquare.row, selectedSquare.col, row, col);
-                  if (validMove) {
-                        movePiece(selectedSquare.row, selectedSquare.col, row, col);
-                        switchPlayer();
-                  }
-
-                  // Deselect the square
-                  clearHighlights();
-                  selectedSquare = null;
             }
+            return true; // No valid moves found - stalemate
+      }
+
+      // End the game
+      function endGame(message) {
+            gameOver = true;
+            gameMessage.textContent = message;
+            gameOverlay.classList.add('visible');
+            board.style.opacity = '1';
       }
 
       // Move piece on the board
@@ -449,10 +475,43 @@ document.addEventListener('DOMContentLoaded', () => {
       // Switch player
       function switchPlayer() {
             currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
-            fullmoveNumber += currentPlayer === 'white' ? 1 : 0;
+      }
+
+      // Handle a square click (move piece or select piece)
+      function handleSquareClick(row, col) {
+            if (gameOver) return;
+
+            const square = document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+            const piece = getPieceAt(row, col);
+
+            if (!selectedSquare) {
+                  // Select the piece if it's the current player's turn
+                  if (piece && piece.color === currentPlayer) {
+                        selectedSquare = { row, col };
+                        square.classList.add('selected');
+                        highlightMoves(row, col);
+                  }
+            } else {
+                  // Try to move the selected piece
+                  if (selectedSquare.row === row && selectedSquare.col === col) {
+                        // Clicked on the same piece - deselect it
+                        clearHighlights();
+                        selectedSquare = null;
+                        return;
+                  }
+
+                  const validMove = isValidMove(selectedSquare.row, selectedSquare.col, row, col);
+                  if (validMove) {
+                        movePiece(selectedSquare.row, selectedSquare.col, row, col);
+                        switchPlayer();
+                  }
+
+                  // Deselect the square
+                  clearHighlights();
+                  selectedSquare = null;
+            }
       }
 
       // Initialize the game
-      createBoard();
-      initializeBoard();
+      initializeGame();
 });

@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chess Game UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="container">
-    <div class="chess-board">
-      <!-- Chess pieces will be dynamically placed by JavaScript -->
+<body class="light-theme">
+  <div class="theme-toggle">🌓</div>
+  <div class="game-container">
+    <div class="chess-board"></div>
+    <div class="game-overlay hidden">
+      <div class="game-over-message"></div>
+      <button class="restart-btn">Play Again</button>
     </div>
   </div>
   <script src="script.js"></script>
